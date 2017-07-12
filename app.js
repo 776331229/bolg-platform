@@ -6,6 +6,9 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var app = express();
 
+// 调用body-parser模块，接收post请求参数
+app.use(bodyParser.urlencoded({ extended: false }));
+
 ///=======路由信息 （接口地址）开始 存放在./routes目录下===========//
 var routes = require('./routes/index');
 
