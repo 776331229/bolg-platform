@@ -1,6 +1,80 @@
 const user = module.exports = {};
 
 /**
+ * 检测用户注册信息
+ * @param req 接收到的参数
+ * */
+function checkInfo(req,res){
+    // 正则校验规则
+    let regexper = {
+        password : /^[\w\d]{6,18}$/,
+        phone : /^1[35789]\d{9}$/,
+        email : /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        qq : /^[1-9]\d$/
+    },
+        reqData = req.query;
+
+    if(!reqData.username){
+        res.send({
+            code: 204,
+            message: '请输入用户名',
+            success: false
+        });
+        return false;
+    } else if(!reqData.password){
+        res.send({
+            code: 204,
+            message: '请输入密码',
+            success: false
+        });
+        return false;
+    } else if(!regexper.password.test(reqData.password)){
+        res.send({
+            code: 204,
+            message: '密码为6-18位的字母+数字组合',
+            success: false
+        });
+        return false;
+    } else if(!reqData.nickName){
+        res.send({
+            code: 204,
+            message: '请输入昵称',
+            success: false
+        });
+        return false;
+    } else if(!regexper.phone.test(reqData.phone)){
+        res.send({
+            code: 204,
+            message: '请输入正确的手机码',
+            success: false
+        });
+        return false;
+    } else if(!regexper.email.test(reqData.email)){
+        res.send({
+            code: 204,
+            message: '请输入正确的邮箱地址',
+            success: false
+        });
+        return false;
+    } else if(reqData.qq && !regexper.qq.test(reqData.qq)){
+        res.send({
+            code: 204,
+            message: '请输入正确的qq号码',
+            success: false
+        });
+        return ;
+    } else if(!reqData.address){
+        res.send({
+            code: 204,
+            message: '请输入联系地址',
+            success: false
+        });
+        return false;
+    }
+    return true;
+}
+
+/**
  * 登录接口
  * */
 user.login = (db)=>(req,res) => {
@@ -41,8 +115,10 @@ user.login = (db)=>(req,res) => {
  * */
 user.getUser = (db)=>(req,res) => {
     let collection = db.get('users'),
-    username = req.query.username || null;
-    collection.find({username},function(error,result){
+        reqData = req.query;
+        condition = reqData.username ? {username : reqData.username} : {}; // 当有条件的时候，进行条件搜索
+
+    collection.find(condition,function(error,result){
         if (error) {
             res.send("There was a problem adding the information to the database.");
         } else {
@@ -51,14 +127,20 @@ user.getUser = (db)=>(req,res) => {
                 res.send({
                     code:200,
                     message:'获取成功',
-                    data:result,
+                    data:{
+                        total:result.length,
+                        list:result
+                    },
                     success: true
                 });
             } else {
                 res.send({
                     code:204,
                     message:'暂无数据',
-                    data:[],
+                    data:{
+                        total:0,
+                        list:[]
+                    },
                     success: false
                 });
             }
@@ -69,82 +151,100 @@ user.getUser = (db)=>(req,res) => {
 /**
  * 新增用户接口
  * */
-user.addUser = function(db) {
-    return function(req,res){
-        // Get our form values. These rely on the "name" attributes
-        // var userName = req.body.username;
-        // var userEmail = req.body.useremail;
+user.addUser = (db)=>(req,res) => {
+    let collection = db.get('users'),
+        reqData = req.query;
 
-        // Set our collection
-        var collection = db.get('users');
-
-        // Submit to the DB
-        collection.insert({
-            "username1" : '111',
-            "email" : '222',
-            "sex" : '222',
-        }, function (err, doc) {
-            if (err) {
-                // If it failed, return error
-                res.send("There was a problem adding the information to the database.");
-            }
-            else {
-                res.send("添加成功");
-            }
-        });
+    if(!checkInfo(req,res)){
+        return ;
     }
+
+    let data = {
+        username : reqData.username,
+        password : reqData.password,
+        nickName : reqData.nickName,
+        sex : reqData.sex,
+        birthday : reqData.birthday || '',
+        phone : reqData.phone,
+        email : reqData.email,
+        qq : reqData.qq,
+        address : reqData.address,
+        like : reqData.like || [],
+    };
+
+    // Submit to the DB
+    collection.insert(data, (error, result)=> {
+        if (error) {
+            // If it failed, return error
+            res.send("There was a problem adding the information to the database.");
+        } else {
+            res.send({
+                code: 200,
+                message: '新增成功',
+                success: true
+            });
+        }
+    });
 };
 
 /**
  * 更新用户信息接口
  * */
-user.updateUser = function(db) {
-    return function(req,res){
-        // Get our form values. These rely on the "name" attributes
-        // var userName = req.body.username;
-        // var userEmail = req.body.useremail;
+user.updateUser = (db)=>(req,res) => {
+    let collection = db.get('users'),
+        reqData = req.query;
 
-        // Set our collection
-        var collection = db.get('users');
-
-        // Submit to the DB
-        collection.update({"username":'111'},{
-            "username" : '333',
-            "email" : '333',
-            "sex" : '333',
-        }, function (err, doc) {
-            if (err) {
-                // If it failed, return error
-                res.send("There was a problem adding the information to the database.");
-            }
-            else {
-                res.send("修改成功");
-            }
-        });
+    if(!checkInfo(req,res)){
+        return ;
     }
+
+    let data = {
+        username : reqData.username,
+        password : reqData.password,
+        nickName : reqData.nickName,
+        sex : reqData.sex,
+        birthday : reqData.birthday || '',
+        phone : reqData.phone,
+        email : reqData.email,
+        qq : reqData.qq,
+        address : reqData.address,
+        like : reqData.like || [],
+    };
+
+    // Submit to the DB
+    collection.update({username:reqData.username},data, (error, result)=> {
+        if (error) {
+            // If it failed, return error
+            res.send("There was a problem adding the information to the database.");
+        } else {
+            res.send({
+                code: 200,
+                message: '修改成功',
+                success: true
+            });
+        }
+    });
 };
 
 /**
  * 删除用户信息接口
  * */
-user.deleteUser = function(db) {
-    return function(req,res){
-        // Get our form values. These rely on the "name" attributes
-        // var userName = req.body.username;
-        // var userEmail = req.body.useremail;
-        console.log(req.body.username);
-        // Set our collection
-        var collection = db.get('users');
+user.deleteUser = (db)=>(req,res) => {
+    let collection = db.get('users'),
+        reqData = req.query;
 
-        // Submit to the DB
-        collection.remove({"username":'333'}, function (err, doc) {
-            if (err) {
-                // If it failed, return error
-                res.send("There was a problem adding the information to the database.");
-            }
-            else {
-                res.send("删除成功");
-            }
-        });
-    }
+    // Submit to the DB
+    collection.remove({username:reqData.username}, (error, result)=> {
+        if (error) {
+            // If it failed, return error
+            res.send("There was a problem adding the information to the database.");
+        }
+        else {
+            res.send({
+                code: 200,
+                message: '删除成功',
+                success: true
+            });
+        }
+    });
 };

@@ -15,6 +15,6 @@ router.post('/login', users.login(db))
     .get('/getUser', users.getUser(db))
     .get('/addUser', users.addUser(db))
     .get('/updateUser', users.updateUser(db))
-    .post('/deleteUser', users.deleteUser(db));
+    .get('/deleteUser', users.deleteUser(db));
 
 module.exports = router;
